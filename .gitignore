@@ -1,0 +1,7 @@
+__pycache__/
+ll_env/
+.env
+notes.md
+mangadextest.py
+feed_data.json
+/data
