@@ -1,12 +1,10 @@
 import requests
 
-from decouple import config
-
 
 # Define some constants for the mangadex API
-BASE_URL = "https://mangadex.org"
-AUTH_URL = "https://mangadex.org/auth/login"
-FEED_URL = "https://mangadex.org/user/follows/manga/feed"
+BASE_URL = "https://api.mangadex.org"
+AUTH_URL = "https://api.mangadex.org/auth/login"
+FEED_URL = "https://api.mangadex.org/user/follows/manga/feed"
 FEED_PARAMS = {
     "limit": 50,
     "translatedLanguage[]": ["en", "es-la"],
@@ -16,13 +14,10 @@ FEED_PARAMS = {
     "includes[]": ["manga", "cover_art", "author"],
 }
 
-# Define the user credentials as environment variables
-USER = config("USER")
-PASS = config("PASS")
 
 def api_auth(payload):
     """Authenticate to the mangadex API and return the header"""
-    auth = requests.post(f'{BASE_URL}/auth/login', json=payload)
+    auth = requests.post(AUTH_URL, json=payload)
     token = auth.json()['token']['session']
     header = {'Authorization': f'Bearer {token}'}
 
@@ -46,7 +41,7 @@ def get_latest_manga_feed(header):
         manga_title = None
         cover_art = None
         author = None
-        url = f"{BASE_URL}/chapter/{chapter_id}"
+        url = f"https://mangadex.org/chapter/{chapter_id}"
         for relation in chapter["relationships"]:
             if relation["type"] == "manga":
                 manga_title = relation["attributes"]["title"]

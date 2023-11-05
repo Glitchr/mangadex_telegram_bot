@@ -1,6 +1,6 @@
 import json, time
-
-import Chapter, Manga, User, utils, api
+from decouple import config
+import utils, api
 
 
 # Set an interval for checking the feed (in seconds)
@@ -10,7 +10,7 @@ interval = 60
 file_name = 'feed_data.json'
 
 # Create a payload with the user credentials
-payload = {'username': api.USER, 'password': api.PASS}
+payload = {'username': config('USER'), 'password': config('PASS')}
 
 # Authenticate to the mangadex API and get the header
 header = api.api_auth(payload)
