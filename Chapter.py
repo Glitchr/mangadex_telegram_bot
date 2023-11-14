@@ -20,11 +20,10 @@ class Chapter:
     
         # use a default value if title is still None or empty 
         self.title = self.title or 'Title not available'
-        
-        # get other attributes you want 
         self.chapter_number = data['attributes']['chapter']
         self.volume_number = data['attributes']['volume']
         self.chapter_id = data['id']
+        
 
          
     def print_info(self):

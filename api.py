@@ -34,11 +34,10 @@ def get_latest_manga_feed(header):
     for chapter in manga_feed["data"]:
         chapter_info = {}
 
-        # Get the chapter's id
         chapter_id = chapter["id"]
-
-        # Get the manga's title, cover art, author and the link
         manga_title = None
+        chapter_number = chapter["attributes"]["chapter"]
+        language = chapter["attributes"]["translatedLanguage"]
         cover_art = None
         author = None
         url = f"https://mangadex.org/chapter/{chapter_id}"
@@ -71,6 +70,8 @@ def get_latest_manga_feed(header):
         chapter_info["cover_art"] = cover_art or "Cover art not available"
         chapter_info["author"] = author or "Author not available"
         chapter_info["url"] = url
+        chapter_info["chapter_number"] = chapter_number
+        chapter_info["language"] = language
 
         # Use the chapter_id as the key for the chapters dictionary
         chapters[chapter_id] = chapter_info
