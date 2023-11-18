@@ -1,6 +1,9 @@
 import requests
-import logging
 
+import log
+
+# Create a logger object with the name of the module
+logger = log.logger
 
 # Define some constants for the mangadex API
 BASE_URL = "https://api.mangadex.org"
@@ -15,18 +18,6 @@ FEED_PARAMS = {
     "includes[]": ["manga", "cover_art", "author"],
 }
 
-# Create a logger object with the name of the module
-logger = logging.getLogger(__name__)
-# Set the logging level to INFO
-logger.setLevel(logging.INFO)
-# Create a file handler object to write the logs to a file
-file_handler = logging.FileHandler("mangadex.log")
-# Create a formatter object to format the logs
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-# Set the formatter for the file handler
-file_handler.setFormatter(formatter)
-# Add the file handler to the logger
-logger.addHandler(file_handler)
 
 def api_auth(payload):
     """Authenticate to the mangadex API and return the header"""
