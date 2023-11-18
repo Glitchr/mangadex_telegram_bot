@@ -1,6 +1,6 @@
 import json, time
 from decouple import config
-import utils, api
+import utils, api, handler
 
 
 # Set an interval for checking the feed (in seconds)
@@ -55,6 +55,7 @@ while True:
             # Get the chapter_info from the current feed data
             chapter_info = current_feed[chapter_id]
             print(utils.readable_chapter(chapter_info))
+            handler.send_chapter(utils.readable_chapter(chapter_info))
     # Update the previous feed data with the current feed data
     previous_feed = current_feed
     # Save the feed data to the file
