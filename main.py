@@ -10,10 +10,16 @@ interval = 60
 file_name = 'feed_data.json'
 
 # Create a payload with the user credentials
-payload = {'username': config('USER'), 'password': config('PASS')}
+payload = {
+    'grant_type': 'password',
+    'username': config('USER'),
+    'password': config('PASS'),
+    'client_id': config('CLIENT_ID'),
+    'client_secret': config('CLIENT_SECRET'),
+    }
 
 # Authenticate to the mangadex API and get the header
-header = api.api_auth(payload)
+header, refresh_token = api.api_auth(payload)
  
 # Try to load the feed data from the file, if it exists
 try:
@@ -24,7 +30,23 @@ except FileNotFoundError:
 
 while True:
     # Get the current feed data from the mangadex API
-    current_feed = api.get_latest_manga_feed(header)
+    try:
+        current_feed = api.get_latest_manga_feed(header)
+    except Exception as e:
+        # If the exception is caused by a 401 response, refresh the header and retry
+        if str(e) == 'Retrieval failed: 401':
+            payload = {
+                'grant_type': 'refresh_token',
+                'refresh_token': refresh_token,
+                'client_id': config('CLIENT_ID'),
+                'client_secret': config('CLIENT_SECRET')
+            }
+            header, refresh_token = api.api_token_refresh(payload)
+            current_feed = api.get_latest_manga_feed(header)
+        # If the exceptions is caused by something else, raise it
+        else:
+            raise e
+
     # Compare the current feed data with the previous feed data
     for chapter_id in current_feed:
         # If the chapter_id is not in the previous feed data, it means it is a 
@@ -32,7 +54,6 @@ while True:
         if chapter_id not in previous_feed:
             # Get the chapter_info from the current feed data
             chapter_info = current_feed[chapter_id]
-            # Print out the new chapter in a readable format
             print(utils.readable_chapter(chapter_info))
     # Update the previous feed data with the current feed data
     previous_feed = current_feed
