@@ -9,13 +9,14 @@ logger = log.logger
 BASE_URL = "https://api.mangadex.org"
 AUTH_URL = "https://auth.mangadex.org/realms/mangadex/protocol/openid-connect/token"
 FEED_URL = "https://api.mangadex.org/user/follows/manga/feed"
+SCANLATION_URL = "https://api.mangadex.org/group/"
 FEED_PARAMS = {
     "limit": 50,
     "translatedLanguage[]": ["en", "es-la"],
     "order[updatedAt]": "desc",
     "order[volume]": "desc",
     "order[chapter]": "desc",
-    "includes[]": ["manga", "cover_art", "author"],
+    "includes[]": "manga",
 }
 
 
@@ -83,14 +84,14 @@ def get_latest_manga_feed(header):
                     chapter_number = chapter['attributes']['chapter']
                     language = chapter['attributes']['translatedLanguage']
 
-                    # Get the manga title and author from the relationships
+                    # Get the manga title and scanlation group id from the relationships
+                    scanlation_group_id = None
                     manga_title = None
-                    author = None
                     for relation in chapter['relationships']:
+                        if relation['type'] == 'scanlation_group':
+                            scanlation_group_id = relation['id']
                         if relation['type'] == 'manga':
                             manga_title = relation['attributes']['title']
-                        elif relation['type'] == 'author':
-                            author = relation['attributes']['name']
 
                     # Use the get method to handle missing keys in the dictionary
                     # to get the manga's title
@@ -113,7 +114,7 @@ def get_latest_manga_feed(header):
                     # Use default values for missing attributes
                     chapter_info["manga_title"] = manga_title or "Manga title not available"
                     chapter_info["chapter_title"] = title or "Chapter title not available"
-                    chapter_info["author"] = author or "Author not available"
+                    chapter_info["scanlation_group"] = get_scanlation_group(header, scanlation_group_id) or "Scanlation group not available"
                     chapter_info["url"] = f"https://mangadex.org/chapter/{chapter_id}"
                     chapter_info["chapter_number"] = chapter_number
                     chapter_info["language"] = language
@@ -139,3 +140,21 @@ def get_latest_manga_feed(header):
         logger.error(f"Failed to retrieve the latest manga feed from the mangadex API: {e}")
         # Raise the exception
         raise e
+    
+def get_scanlation_group(header, id):
+    """Get the scanlation group that translated the chapter"""
+    try:
+        response = requests.get(f'{SCANLATION_URL}{id}', headers=header)
+        if response.status_code == 200:
+            scanlation_feed = response.json()
+
+            if 'data' in scanlation_feed:
+                scanlation_name = scanlation_feed['data']['attributes']['name']
+                return scanlation_name
+        else:
+            logger.error(f'Failed to retrieve the scanlation team from the mangadex API: {response.status_code}')
+    except requests.exceptions.RequestException as e:
+            # Log an error message with the exception
+            logger.error(f"Failed to retrieve the latest manga feed from the mangadex API: {e}")
+            pass
+    
