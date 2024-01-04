@@ -1,10 +1,13 @@
 import json, time
 from decouple import config
-import utils, api, handler
+from utils import readable_chapter, retry_on_failure
+from api import api_auth, api_token_refresh, get_latest_manga_feed
+from handler import send_chapter
 
 
-# Set an interval for checking the feed (in seconds)
-interval = 60
+interval = 60 # Set an interval for checking the feed (1 minute in seconds)
+max_auth_retries = 5 # Set maximum number of retries and delay between retries
+auth_retry_delay = 1200  # (20 minutes in seconds)
 
 # Set a file name for storing the feed data
 file_name = 'feed_data.json'
@@ -17,21 +20,9 @@ payload = {
     'client_id': config('CLIENT_ID'),
     'client_secret': config('CLIENT_SECRET'),
     }
-
+            
 # Authenticate to the mangadex API and get the header
-# Set maximum number of retries and delay between retries
-max_auth_retries = 5
-auth_retry_delay = 1200  # in seconds
-
-for attempt in range(max_auth_retries):
-    try:
-        header, refresh_token = api.api_auth(payload)
-        break  # If authentication is successful, break the loop
-    except Exception as e:
-        if str(e) == 'Authentication failed: 503' and attempt < max_auth_retries - 1:  # Don't sleep on the last attempt
-            time.sleep(auth_retry_delay)  # Wait before retrying
-        else:
-            raise e  # If it's not a 503 error or if all retries have been used, raise the exception
+header, refresh_token = retry_on_failure(api_auth, payload)
  
 # Try to load the feed data from the file, if it exists
 try:
@@ -43,7 +34,7 @@ except FileNotFoundError:
 while True:
     # Get the current feed data from the mangadex API
     try:
-        current_feed = api.get_latest_manga_feed(header)
+        current_feed = get_latest_manga_feed(header)
     except Exception as e:
         # If the exception is caused by a 401 response, refresh the header and retry
         if str(e) == 'Retrieval failed: 401':
@@ -53,8 +44,8 @@ while True:
                 'client_id': config('CLIENT_ID'),
                 'client_secret': config('CLIENT_SECRET')
             }
-            header, refresh_token = api.api_token_refresh(payload)
-            current_feed = api.get_latest_manga_feed(header)
+            header, refresh_token = retry_on_failure(api_token_refresh, payload)
+            current_feed = get_latest_manga_feed(header)
         # If the exceptions is caused by something else, raise it
         else:
             raise e
@@ -66,8 +57,8 @@ while True:
         if chapter_id not in previous_feed:
             # Get the chapter_info from the current feed data
             chapter_info = current_feed[chapter_id]
-            print(utils.readable_chapter(chapter_info))
-            handler.send_chapter(utils.readable_chapter(chapter_info))
+            print(readable_chapter(chapter_info))
+            send_chapter(readable_chapter(chapter_info))
     # Update the previous feed data with the current feed data
     previous_feed = current_feed
     # Save the feed data to the file
