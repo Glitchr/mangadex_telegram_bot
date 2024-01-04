@@ -19,7 +19,19 @@ payload = {
     }
 
 # Authenticate to the mangadex API and get the header
-header, refresh_token = api.api_auth(payload)
+# Set maximum number of retries and delay between retries
+max_auth_retries = 5
+auth_retry_delay = 1200  # in seconds
+
+for attempt in range(max_auth_retries):
+    try:
+        header, refresh_token = api.api_auth(payload)
+        break  # If authentication is successful, break the loop
+    except Exception as e:
+        if str(e) == 'Authentication failed: 503' and attempt < max_auth_retries - 1:  # Don't sleep on the last attempt
+            time.sleep(auth_retry_delay)  # Wait before retrying
+        else:
+            raise e  # If it's not a 503 error or if all retries have been used, raise the exception
  
 # Try to load the feed data from the file, if it exists
 try:
