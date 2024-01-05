@@ -6,8 +6,6 @@ from handler import send_chapter
 
 
 interval = 60 # Set an interval for checking the feed (1 minute in seconds)
-max_auth_retries = 5 # Set maximum number of retries and delay between retries
-auth_retry_delay = 1200  # (20 minutes in seconds)
 
 # Set a file name for storing the feed data
 file_name = 'feed_data.json'
@@ -15,7 +13,7 @@ file_name = 'feed_data.json'
 # Create a payload with the user credentials
 payload = {
     'grant_type': 'password',
-    'username': config('USER'),
+    'username': config('M_USER'),
     'password': config('PASS'),
     'client_id': config('CLIENT_ID'),
     'client_secret': config('CLIENT_SECRET'),
@@ -23,7 +21,7 @@ payload = {
             
 # Authenticate to the mangadex API and get the header
 header, refresh_token = retry_on_failure(api_auth, payload)
- 
+
 # Try to load the feed data from the file, if it exists
 try:
     with open(file_name, "r") as f:

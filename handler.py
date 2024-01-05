@@ -1,9 +1,6 @@
 import requests, time
 from decouple import config
-import log
-
-# Create a logger object with the name of the module
-logger = log.logger
+from log import logger
 
 TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = config('TELEGRAM_CHAT_ID')
@@ -35,5 +32,4 @@ def send_chapter(chapter):
         # Handle any requests exceptions
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to send message: {chapter}", exc_info=True)
-            print(f"Attempt {attempt+1} failed, retrying in {retry_delay} seconds...")
             time.sleep(retry_delay)  # Wait before retrying
