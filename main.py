@@ -49,7 +49,7 @@ while True:
             raise e
 
     # Compare the current feed data with the previous feed data
-    for chapter_id in current_feed:
+    for chapter_id in reversed(current_feed):
         # If the chapter_id is not in the previous feed data, it means it is a 
         # new chapter
         if chapter_id not in previous_feed:
