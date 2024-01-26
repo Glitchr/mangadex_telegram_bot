@@ -1,5 +1,6 @@
-import requests
+"""This module handles all of the API calls to Mangadex"""
 
+import requests
 from log import logger
 
 # Define some constants for the mangadex API
@@ -29,14 +30,18 @@ def api_auth(payload):
             return header, refresh_token
         else:
             # Log an error message with the status code
-            logger.error(f'Failed to authenticate to the mangadex API: {auth.status_code}')
-            print(f'Authentication failed: {auth.status_code}')
+            if auth.status_code == 401:
+                logger.error(f'Token expired, refreshing token...')
+            else:
+                logger.error(
+                    f'Failed to authenticate to the mangadex API: {auth.status_code}')
             raise Exception(f'Authentication failed: {auth.status_code}')
 
     # Handle any requests exceptions
     except requests.exceptions.RequestException as e:
         logger.error(f'Failed to authenticate to the mangadex API: {e}')
         raise e
+
 
 def api_token_refresh(payload):
     """Refresh the Mangadex API token and return the header"""
@@ -52,10 +57,10 @@ def api_token_refresh(payload):
 
             return header, refresh_token
         else:
-            logger.error(f'Failed to refresh the token for the mangadex API: {refresh.status_code}')
-            print(f'Token Refresh failed: {refresh.status_code}')
+            logger.error(
+                f'Failed to refresh the token for the mangadex API: {refresh.status_code}')
             raise Exception(f'Token Refresh failed: {refresh.status_code}')
-    
+
     # Handle any requests exceptions
     except requests.exceptions.RequestException as e:
         logger.error(f'Failed to refresh the token for the mangadex API: {e}')
@@ -96,13 +101,13 @@ def get_latest_manga_feed(header):
                             or manga_title.get('ja')
                             or manga_title.get('es-la')
                         )
-                    
+
                     # Get the chapter's title
                     title = chapter['attributes']['title']
                     if type(title) == dict:
                         title = (
-                            title.get('en') 
-                            or title.get('ja-ro') 
+                            title.get('en')
+                            or title.get('ja-ro')
                             or title.get('es-la')
                         )
 
@@ -115,23 +120,26 @@ def get_latest_manga_feed(header):
 
                     # Use the chapter_id as the key for the chapters dictionary
                     chapters[chapter_id] = chapter_info
-            
+
                 # Log a success message
-                logger.info("Succesfully retrieved the latest manga feed from the mangadex API")
+                logger.info(
+                    "Succesfully retrieved the latest manga feed from the mangadex API")
 
                 return chapters
             else:
                 # Log an error message with the status code
-                logger.error(f'Failed to retrieve the latest manga feed from the mangadex API: {manga_feed}')
+                logger.error(
+                    f'Data not found: {manga_feed}')
                 raise Exception(f'Retrieval failed: {manga_feed}')
         else:
-            logger.error(f"Failed to retrieve the latest manga feed from the mangadex API: {response.status_code}")
+            logger.error(
+                f"Failed to retrieve the latest manga feed from the mangadex API: {response.status_code}")
             raise Exception(f"Retrieval failed: {response.status_code}")
-            
+
     # Handle any requests exceptions
     except requests.exceptions.RequestException as e:
         # Log an error message with the exception
-        logger.error(f"Failed to retrieve the latest manga feed from the mangadex API: {e}")
+        logger.error(
+            f"Failed to retrieve the latest manga feed from the mangadex API: {e}")
         # Raise the exception
         raise e
-    
